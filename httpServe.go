@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+
+	"github.com/koding/websocketproxy"
 )
 
 func main() {
@@ -25,11 +28,17 @@ func main() {
 	versionFlag := flag.Bool("version", false, "show version")
 	directory := flag.String("dir", cwd, "directory to serve")
 	port := flag.String("port", "8000", "port")
+	flagBackend := flag.String("backend", "ws://localhost:8000", "Backend URL for proxying")
 
 	flag.Parse()
 	if *versionFlag {
 		fmt.Println(version)
 		os.Exit(0)
+	}
+
+	u, err := url.Parse(*flagBackend)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// Set a startup message
@@ -40,6 +49,6 @@ func main() {
 	http.Handle("/", fs)
 
 	log.Println("Serving on port", *port)
-	http.ListenAndServe(":"+*port, nil)
+	http.ListenAndServe(":"+*port, websocketproxy.NewProxy(u))
 
 }
